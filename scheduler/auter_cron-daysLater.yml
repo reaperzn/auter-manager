@@ -114,4 +114,5 @@
         module: shell awk '/^\s+username:.*[a-z]/ {print $2;exit;}' $HOME/.config/hammertime/config.yaml
       register: username
       failed_when: False
+      changed_when: false
 ...

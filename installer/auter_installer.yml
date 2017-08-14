@@ -13,15 +13,17 @@
         - prechecks
       become: False
       changed_when: False
-      local_action: command grep ^{{ inventory_hostname.split(':')[0] }}, {{ csv_file }}
+      local_action: command grep -i ^{{ inventory_hostname.split(':')[0] }}, {{ csv_file }}
 
     - name: Check if epel repo is present
       tags:
         - prechecks
         - auter
         - configsnap
-      shell: time yum repolist | grep epel | wc -l
+      shell: yum repolist | grep epel 
       register: epelPresent
+      changed_when: false
+      failed_when: epelPresent.rc > 1
 
     - name: add the rs-epel repo
       tags:
@@ -32,13 +34,13 @@
       yum:
         name: rs-epel-release
         state: latest
-      when: epelPresent.stdout|int == 0
+      when: epelPresent.rc == 1
       
     - name: add the epel repo
       tags:
         - auter
         - configsnap
-      when: ( '"No Package" in result.msg' ) and epelPresent.stdout == 0
+      when: ( '"No Package" in result.msg' ) and epelPresent.rc == 1
       yum:
         name: epel-release
         state: latest
@@ -48,7 +50,7 @@
         - auter
       yum:
         name: auter
-        state: latest
+        state: present
 
     - name: adjust the auter.conf file
       tags:
@@ -126,6 +128,7 @@
         - auter
       shell: "auter --status"
       register: auterStatus
+      changed_when: false
 
     - name: enable auter
       tags:
